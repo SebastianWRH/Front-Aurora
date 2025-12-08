@@ -12,7 +12,7 @@ function Footer() {
         <div className="aurora-footer-nav-column aurora-footer-brand-section">
           <h2 className="aurora-footer-brand-logo">AURORA</h2>
           <p className="aurora-footer-brand-desc">
-            Creando joyas excepcionales que capturan la esencia de la elegancia atemporal.
+            Diseños atemporales, materiales nobles y ese toque artesanal que marca la diferencia.
           </p>
           <div className="aurora-footer-social-links">
             <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="aurora-footer-social-item">
@@ -49,7 +49,6 @@ function Footer() {
             <li><Link to="/">Inicio</Link></li>
             <li><Link to="/catalogo">Catálogo</Link></li>
             <li><Link to="/contacto">Contáctame</Link></li>
-            <li><Link to="/sobre-nosotros">Sobre Nosotros</Link></li>
           </ul>
         </div>
 

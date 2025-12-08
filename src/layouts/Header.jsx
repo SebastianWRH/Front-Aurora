@@ -8,6 +8,7 @@ import "./Header.css";
 
 function Header() {
   const [openSearch, setOpenSearch] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const { toggleCart, getCartCount } = useCart();
 
   return (
@@ -15,20 +16,51 @@ function Header() {
       <header className="header">
         <nav className="header-container">
 
+          {/* NUEVO: Botón Hamburguesa */}
+          <button 
+            className={`hamburger ${menuOpen ? 'active' : ''}`}
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+
           {/* Marca */}
           <div className="marca">
             <h1>AURORA</h1>
           </div>
 
           {/* Menú centrado */}
-          <div className="menu">
-            <Link to="/">Inicio</Link>
-            <Link to="/catalogo">Catálogo</Link>
-            <Link to="/contacto">Contáctame</Link>
+          <div className={`menu ${menuOpen ? 'open' : ''}`}>
+            <Link to="/" onClick={() => setMenuOpen(false)}>Inicio</Link>
+            <Link to="/catalogo" onClick={() => setMenuOpen(false)}>Catálogo</Link>
+            <Link to="/contacto" onClick={() => setMenuOpen(false)}>Contáctame</Link>
+            {/* NUEVO: Link rastrear en menú móvil */}
+            <Link to="/rastrear-pedido" onClick={() => setMenuOpen(false)} className="track-mobile">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              Rastrear Pedido
+            </Link>
           </div>
+
+          {/* NUEVO: Overlay para cerrar menú */}
+          {menuOpen && <div className="overlay" onClick={() => setMenuOpen(false)}></div>}
 
           {/* Acciones */}
           <div className="acciones">
+
+            {/* NUEVO: Icono Rastrear Pedido (desktop) */}
+            <Link to="/rastrear-pedido" className="icon-track">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24" strokeWidth="1.5" className="track-svg">
+                <path strokeLinecap="round" strokeLinejoin="round"
+                  d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+            </Link>
 
             {/* Icono Search */}
             <div className="icon-search" onClick={() => setOpenSearch(true)}>

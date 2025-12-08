@@ -12,23 +12,19 @@ function FAQSection() {
     {
       id: 2,
       question: "¿Realizas envíos a todo el Perú?",
-      answer: "Sí, realizamos envíos a todo el Perú. En Lima, el envío es gratuito para compras mayores a S/200. Para provincia, coordinamos el envío según la ubicación."
+      answer: "Por ahora no realizamos envíos a todo el Perú. Actualmente nuestra cobertura es únicamente para Lima Metropolitana.Si estás dentro de esta zona, podremos coordinar tu entrega sin problemas. Si estás fuera de Lima, trabajamos para ampliar nuestra cobertura pronto."
     },
     {
       id: 3,
-      question: "¿Puedo ver las joyas antes de comprar?",
-      answer: "¡Por supuesto! Puedes agendar una cita en mi taller en San Isidro para ver las piezas en persona y recibir asesoría personalizada."
+      question: "¿Puedo ver las piezas antes de comprar?",
+      answer: "¡Por supuesto! Podemos coordinar una cita para ver las piezas en persona si el punto de encuentro es accesible para ambas partes."
     },
     {
       id: 4,
-      question: "¿Ofrecen garantía?",
-      answer: "Todas nuestras joyas incluyen certificado de autenticidad y garantía de 6 meses contra defectos de fabricación. También ofrecemos servicio de mantenimiento."
-    },
-    {
-      id: 5,
       question: "¿Aceptan diseños personalizados?",
-      answer: "Sí, nos especializamos en crear piezas únicas según tus preferencias. Contáctame para discutir tu idea y crear la joya perfecta para ti."
+      answer: "Sí, nos especializamos en crear piezas únicas según tus preferencias. Contáctame para discutir tu idea y crear la pieza perfecta para ti."
     }
+      
   ];
 
   const toggleFAQ = (index) => {

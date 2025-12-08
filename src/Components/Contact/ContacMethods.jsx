@@ -9,7 +9,7 @@ function ContactMethods() {
       ),
       title: "WhatsApp",
       description: "Escríbeme directamente",
-      value: "+51 987 654 321",
+      value: "+51 942 346 985",
       action: "Enviar Mensaje",
       link: "https://wa.me/51987654321"
     },
@@ -35,10 +35,9 @@ function ContactMethods() {
         </svg>
       ),
       title: "Ubicación",
-      description: "Visítame en mi taller",
-      value: "San Isidro, Lima - Perú",
-      action: "Ver Mapa",
-      link: "https://maps.google.com"
+      description: "Solo online",
+      value: "Lima - Perú",
+      action: "Ver Mapa"
     }
   ];
 
