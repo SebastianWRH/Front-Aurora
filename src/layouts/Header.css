@@ -1,0 +1,185 @@
+/* ====== HEADER BASE ====== */
+.header {
+  width: 100%;
+  background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 1px solid #d4af37;
+  box-shadow: 0 2px 12px rgba(212, 175, 55, 0.08);
+}
+
+/* Contenedor centrado igual que Home */
+.header-container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 20px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+}
+
+/* ====== MARCA ====== */
+.marca h1 {
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: 4px;
+  color: #d4af37;
+  margin: 0;
+  font-family: 'Playfair Display', 'Cormorant', serif;
+  text-transform: uppercase;
+  position: relative;
+}
+
+.marca h1::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, #d4af37 50%, transparent 100%);
+}
+
+/* ====== MENU ====== */
+.menu {
+  display: flex;
+  gap: 35px;
+}
+
+.menu a {
+  text-decoration: none;
+  color: #333333;
+  font-weight: 400;
+  font-size: 15px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  position: relative;
+  padding-bottom: 3px;
+}
+
+.menu a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 1px;
+  background: #d4af37;
+  transition: width 0.3s ease;
+}
+
+.menu a:hover {
+  color: #d4af37;
+}
+
+.menu a:hover::after {
+  width: 100%;
+}
+
+/* ====== ACCIONES ====== */
+.acciones {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+/* Iconos uniformes */
+.icon-cart,
+.icon-search {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  background: transparent;
+}
+
+.icon-cart:hover,
+.icon-search:hover {
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.cart-svg,
+.search-svg {
+  width: 20px;
+  height: 20px;
+  stroke: #d4af37;
+  stroke-width: 1.5px;
+  transition: all 0.3s ease;
+}
+
+.icon-cart:hover .cart-svg,
+.icon-search:hover .search-svg {
+  stroke: #b8941e;
+  transform: scale(1.1);
+}
+
+/* Contador carrito */
+.count-product {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: linear-gradient(135deg, #d4af37 0%, #c9a961 100%);
+  color: white;
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* ====== MOBILE ====== */
+@media (max-width: 768px) {
+
+  .header-container {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    padding: 15px 20px;
+  }
+
+  .marca h1 {
+    font-size: 22px;
+    letter-spacing: 3px;
+  }
+
+  .menu {
+    gap: 20px;
+  }
+
+  .menu a {
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+
+  .icon-cart,
+  .icon-search {
+    width: 32px;
+    height: 32px;
+  }
+
+  .cart-svg,
+  .search-svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .count-product {
+    width: 16px;
+    height: 16px;
+    font-size: 9px;
+  }
+}
