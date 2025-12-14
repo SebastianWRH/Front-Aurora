@@ -56,16 +56,17 @@
 /* Progress Steps */
 .checkout-progress {
   width: 100%;
-  padding: 40px 20px;
-  background: white;
+  padding: 40px 20px 10px;
+  margin-bottom: 20px;
 }
 
-.progress-container {
-  max-width: 600px;
-  margin: 0 auto;
+.checkout-progress {
   display: flex;
   align-items: center;
   justify-content: center;
+  max-width: 600px;
+  margin: auto;
+  padding: 20px;
 }
 
 .progress-step {
@@ -73,9 +74,10 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
+  position: relative;
 }
 
-.step-number {
+.progress-circle {
   width: 50px;
   height: 50px;
   border-radius: 50%;
@@ -88,38 +90,50 @@
   font-weight: 400;
   transition: all 0.3s ease;
   background: white;
+  z-index: 2;
 }
 
-.progress-step.active .step-number {
+.progress-step.active .progress-circle {
   border-color: #d4af37;
   color: #d4af37;
   background: rgba(212, 175, 55, 0.1);
 }
 
-.progress-step.completed .step-number {
+.progress-step.completed .progress-circle {
   border-color: #d4af37;
   background: #d4af37;
   color: white;
 }
 
-.step-label {
-  font-size: 14px;
+.progress-step span {
+  font-size: 13px;
   color: #999;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+  text-align: center;
+  max-width: 120px;
 }
 
-.progress-step.active .step-label {
+.progress-step.active span {
   color: #d4af37;
-  font-weight: 400;
+  font-weight: 500;
+}
+
+.progress-step.completed span {
+  color: #d4af37;
 }
 
 .progress-line {
-  width: 120px;
+  width: 150px;
   height: 2px;
   background: #ddd;
-  margin: 0 20px;
-  margin-bottom: 35px;
+  position: relative;
+  top: -20px;
+  transition: background 0.3s ease;
+}
+
+.progress-step.completed ~ .progress-line {
+  background: #d4af37;
 }
 
 /* Checkout Content */
@@ -138,7 +152,7 @@
 /* Checkout Form */
 .checkout-form,
 .payment-methods {
-  background: white;
+  background: rgb(255, 255, 255);
   padding: 40px;
   border: 1px solid rgba(212, 175, 55, 0.15);
 }
@@ -1126,13 +1140,13 @@
     margin: 0 10px;
   }
 
-  .step-number {
+  .progress-circle {
     width: 40px;
     height: 40px;
     font-size: 16px;
   }
 
-  .step-label {
+  .progress-step span {
     font-size: 12px;
   }
 
