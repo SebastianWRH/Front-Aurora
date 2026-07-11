@@ -99,6 +99,15 @@ const ProductCard = ({ product }) => {
         {product.price !== null && product.price !== undefined && (
           <p className="product-price">{formatPrice(product.price, settings.currency)}</p>
         )}
+
+        <div className="product-mobile-actions">
+          <button className="add-to-cart-btn" onClick={handleAddToSelection} disabled={isUnavailable}>
+            {isUnavailable ? 'Agotado' : 'Agregar a la lista'}
+          </button>
+          <button className="whatsapp-card-btn" onClick={handleWhatsApp}>
+            Consultar por WhatsApp
+          </button>
+        </div>
       </div>
     </article>
   );

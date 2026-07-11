@@ -342,6 +342,10 @@ textarea {
   cursor: pointer;
 }
 
+.product-mobile-actions {
+  display: none;
+}
+
 .product-meta,
 .producto-specs,
 .producto-tags {
@@ -495,7 +499,7 @@ textarea {
   }
 
   .catalogo-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .catalogo-controls-container {
