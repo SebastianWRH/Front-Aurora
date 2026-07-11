@@ -1,6 +1,11 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const CartContext = createContext();
+const storageKey = 'auroraConsultationList';
+const legacyStorageKey = 'auroraCart';
+
+const getCartItemKey = (item) => item.cart_id || String(item.id);
 
 export const useCart = () => {
   const context = useContext(CartContext);
@@ -15,65 +20,64 @@ export const CartProvider = ({ children }) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Cargar carrito desde localStorage SOLO al montar el componente
   useEffect(() => {
     try {
-      const savedCart = localStorage.getItem('auroraCart');
-      if (savedCart) {
-        const parsedCart = JSON.parse(savedCart);
-        setCartItems(parsedCart);
+      const savedList = localStorage.getItem(storageKey) || localStorage.getItem(legacyStorageKey);
+      if (savedList) {
+        setCartItems(JSON.parse(savedList));
       }
     } catch (error) {
-      console.error('Error al cargar carrito desde localStorage:', error);
-      localStorage.removeItem('auroraCart');
+      console.error('Error al cargar la lista de consulta:', error);
+      localStorage.removeItem(storageKey);
+      localStorage.removeItem(legacyStorageKey);
     } finally {
       setIsLoaded(true);
     }
-  }, []); // Array vacío = solo se ejecuta una vez al montar
+  }, []);
 
-  // Guardar carrito en localStorage cuando cambie (pero solo después de cargar)
   useEffect(() => {
-    if (isLoaded) {
-      try {
-        localStorage.setItem('auroraCart', JSON.stringify(cartItems));
+    if (!isLoaded) return;
 
-      } catch (error) {
-        console.error('Error al guardar carrito en localStorage:', error);
-      }
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(cartItems));
+      localStorage.removeItem(legacyStorageKey);
+    } catch (error) {
+      console.error('Error al guardar la lista de consulta:', error);
     }
   }, [cartItems, isLoaded]);
 
   const addToCart = (product) => {
+    const quantityToAdd = Number(product.quantity) || 1;
+    const cartId = product.cart_id || (product.variant_id ? `${product.id}:${product.variant_id}` : String(product.id));
+
     setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => item.id === product.id);
-      
+      const existingItem = prevItems.find(item => getCartItemKey(item) === cartId);
+
       if (existingItem) {
-        // Si existe, aumentar cantidad
         return prevItems.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+          getCartItemKey(item) === cartId
+            ? { ...item, quantity: item.quantity + quantityToAdd }
             : item
         );
       }
-      
-      // Si no existe, agregar nuevo producto
-      return [...prevItems, { ...product, quantity: 1 }];
+
+      return [...prevItems, { ...product, cart_id: cartId, quantity: quantityToAdd }];
     });
   };
 
-  const removeFromCart = (productId) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
+  const removeFromCart = (cartItemKey) => {
+    setCartItems(prevItems => prevItems.filter(item => getCartItemKey(item) !== String(cartItemKey)));
   };
 
-  const updateQuantity = (productId, quantity) => {
+  const updateQuantity = (cartItemKey, quantity) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(cartItemKey);
       return;
     }
-    
+
     setCartItems(prevItems =>
       prevItems.map(item =>
-        item.id === productId ? { ...item, quantity } : item
+        getCartItemKey(item) === String(cartItemKey) ? { ...item, quantity } : item
       )
     );
   };
@@ -84,9 +88,9 @@ export const CartProvider = ({ children }) => {
 
   const getCartTotal = () => {
     return cartItems.reduce((total, item) => {
-      const price = parseFloat(item.price) || 0;
+      const price = parseFloat(item.price);
       const quantity = parseInt(item.quantity) || 0;
-      return total + (price * quantity);
+      return Number.isNaN(price) ? total : total + (price * quantity);
     }, 0);
   };
 
@@ -95,11 +99,12 @@ export const CartProvider = ({ children }) => {
   };
 
   const toggleCart = () => {
-    setIsCartOpen(!isCartOpen);
+    setIsCartOpen(isOpen => !isOpen);
   };
 
   const value = {
     cartItems,
+    selectionItems: cartItems,
     addToCart,
     removeFromCart,
     updateQuantity,

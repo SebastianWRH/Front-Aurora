@@ -1,10 +1,11 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useProducts } from '../hooks/useProducts';
+import { useCategories } from '../hooks/useCategories';
 
 const CatalogoContext = createContext();
 
-// Hook personalizado para usar el contexto
 export const useCatalogo = () => {
   const context = useContext(CatalogoContext);
   if (!context) {
@@ -13,63 +14,70 @@ export const useCatalogo = () => {
   return context;
 };
 
-// Provider del contexto
 export const CatalogoProvider = ({ children }) => {
   const location = useLocation();
   const [selectedCategory, setSelectedCategory] = useState('Todos');
+  const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('featured');
-  
-  // Obtener productos desde Supabase
+
   const { products, loading, error, refreshProducts } = useProducts();
+  const { categories } = useCategories();
 
-  // Configurar categoría inicial desde el state de navegación
   useEffect(() => {
-    
-    if (location.state?.category) {
-      const category = location.state.category;
- 
+    const params = new URLSearchParams(location.search);
+    const category = location.state?.category || params.get('category') || 'Todos';
+    const timeoutId = window.setTimeout(() => {
       setSelectedCategory(category);
-      
-      // Limpiar el state después de aplicarlo
-      setTimeout(() => {
+
+      if (location.state?.category) {
         window.history.replaceState({}, document.title);
-      }, 100);
-    } else {
-      // Si no hay categoría, resetear a 'Todos'
-      setSelectedCategory('Todos');
-    }
-  }, [location.pathname, location.state]);
+      }
+    }, 0);
 
-  // Filtrar productos
+    return () => window.clearTimeout(timeoutId);
+  }, [location.pathname, location.search, location.state]);
+
   const filteredProducts = useMemo(() => {
-    const filtered = products.filter(product => 
-      selectedCategory === 'Todos' || product.category === selectedCategory
-    );
+    return products.filter(product => {
+      const matchesCategory =
+        selectedCategory === 'Todos' ||
+        product.category === selectedCategory ||
+        product.category_slug === selectedCategory;
 
-    return filtered;
-  }, [selectedCategory, products]);
+      const search = searchTerm.trim().toLowerCase();
+      const matchesSearch =
+        !search ||
+        product.name?.toLowerCase().includes(search) ||
+        product.description?.toLowerCase().includes(search) ||
+        product.material?.toLowerCase().includes(search) ||
+        product.color?.toLowerCase().includes(search);
 
-  // Ordenar productos
+      return matchesCategory && matchesSearch;
+    });
+  }, [selectedCategory, searchTerm, products]);
+
   const sortedProducts = useMemo(() => {
     return [...filteredProducts].sort((a, b) => {
-      if (sortBy === 'price-asc') return a.price - b.price;
-      if (sortBy === 'price-desc') return b.price - a.price;
+      if (sortBy === 'price-asc') return Number(a.price || 0) - Number(b.price || 0);
+      if (sortBy === 'price-desc') return Number(b.price || 0) - Number(a.price || 0);
       if (sortBy === 'name') return a.name.localeCompare(b.name);
-      // featured (orden original)
+
       if (sortBy === 'featured') {
-        // Primero los destacados
         if (a.featured && !b.featured) return -1;
         if (!a.featured && b.featured) return 1;
-        return 0;
       }
+
       return 0;
     });
   }, [filteredProducts, sortBy]);
 
   const value = {
     products,
+    categories,
     selectedCategory,
     setSelectedCategory,
+    searchTerm,
+    setSearchTerm,
     sortBy,
     setSortBy,
     filteredProducts,

@@ -1,0 +1,39 @@
+.floating-whatsapp {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 900;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 18px;
+  border-radius: 999px;
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--aurora-gold) 0%, var(--aurora-gold-deep) 100%);
+  box-shadow: 0 14px 34px rgba(196, 154, 61, 0.28);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  letter-spacing: 0.02em;
+}
+
+.floating-whatsapp svg {
+  flex: 0 0 auto;
+}
+
+.floating-whatsapp:hover {
+  background: linear-gradient(135deg, var(--aurora-gold-deep) 0%, var(--aurora-gold) 100%);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+  .floating-whatsapp {
+    right: 14px;
+    bottom: 14px;
+    padding: 12px 14px;
+  }
+
+  .floating-whatsapp span {
+    display: none;
+  }
+}

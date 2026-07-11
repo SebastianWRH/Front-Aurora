@@ -4,9 +4,6 @@ import Home from "./Pages/Home";
 import Catalogo from "./Pages/Catalogo";
 import Producto from "./Pages/Producto";
 import Contacto from "./Pages/Contac";
-import Checkout from "./Pages/Checkout";
-import Diosito from "./Pages/Admin"
-import OrderStatus from './Pages/OrderStatus';
 
 const router = createBrowserRouter([
   {
@@ -26,19 +23,7 @@ const router = createBrowserRouter([
         element: <Contacto />
       },
       {
-        path:"/Checkout",
-        element: <Checkout />
-      },
-      {
-        path:"/diosito",
-        element: <Diosito />
-      },
-      {
-        path:"/rastrear-pedido",
-        element: <OrderStatus />
-      },
-      {
-        path: "/producto/:id",
+        path: "/producto/:slug",
         element: <Producto />
       }
     ]

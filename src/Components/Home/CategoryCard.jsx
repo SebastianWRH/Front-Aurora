@@ -1,12 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const CategoryCard = ({ title, image, description }) => {
+const CategoryCard = ({ title, slug, image, description }) => {
   const navigate = useNavigate();
 
   const handleExplore = () => {
     // Navegar al catálogo con la categoría seleccionada
-    navigate('/catalogo', { state: { category: title } });
+    navigate('/catalogo', { state: { category: slug || title } });
   };
 
   return (

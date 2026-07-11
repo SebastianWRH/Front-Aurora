@@ -1,66 +1,82 @@
 import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useProducto } from '../../context/ProductoContext';
 import { useCart } from '../../context/CartContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { useSettings } from '../../hooks/useSettings';
+import { formatPrice, generateProductWhatsAppMessage, openWhatsApp } from '../../lib/whatsapp';
+
+const colorSwatches = {
+  amarillo: '#f4c430',
+  azul: '#1f45d8',
+  multicolor: 'conic-gradient(#121826, #1f45d8, #d4af37, #7c3aed, #121826)',
+  morado: '#6f3bb5',
+  negro: '#1f1d1b',
+  rosado: '#d94fa3',
+  verde: '#14884f'
+};
+
+const getSwatchStyle = (value = '') => {
+  const normalizedValue = value.toLowerCase();
+  const colorKey = Object.keys(colorSwatches).find(key => normalizedValue.includes(key));
+  return { background: colorSwatches[colorKey] || '#d7c6ad' };
+};
 
 const ProductoInfo = () => {
-  const { 
-    producto, 
-    loading, 
+  const {
+    producto,
+    loading,
     error,
+    selectedVariant,
+    selectVariant,
+    selectedPrice,
     quantity,
     incrementQuantity,
     decrementQuantity,
     goBack
   } = useProducto();
-
-  const { addToCart } = useCart();
+  const { addToCart, setIsCartOpen } = useCart();
+  const { settings } = useSettings();
   const navigate = useNavigate();
 
-  // Función para navegar al catálogo con categoría
   const handleCategoryClick = (e) => {
     e.preventDefault();
-    navigate('/catalogo', { state: { category: producto.category } });
+    navigate('/catalogo', { state: { category: producto.category_slug || producto.category } });
   };
 
-  // Función para agregar al carrito
-  const handleAddToCart = () => {
-    if (!producto || stock === 0) return;
+  const handleAddToSelection = () => {
+    if (!producto || producto.stock_status === 'Agotado') return;
 
-    // Agregar producto con la cantidad seleccionada
-    for (let i = 0; i < quantity; i++) {
-      addToCart({
-        id: producto.id,
-        name: producto.name,
-        price: producto.price,
-        image: producto.image_url,
-        category: producto.category,
-        stock: stock
-      });
-    }
+    const variantLabel = selectedVariant
+      ? `${selectedVariant.name}: ${selectedVariant.value}`
+      : null;
 
-    // Opcional: Mostrar feedback
-    console.log(`${quantity} unidad(es) de ${producto.name} agregado(s) al carrito`);
+    addToCart({
+      cart_id: selectedVariant ? `${producto.id}:${selectedVariant.id}` : String(producto.id),
+      id: producto.id,
+      slug: producto.slug,
+      name: producto.name,
+      price: selectedPrice,
+      image: selectedVariant?.image_url || producto.image_url,
+      category: producto.category,
+      color: selectedVariant?.name?.toLowerCase() === 'color' ? selectedVariant.value : producto.color,
+      variant_id: selectedVariant?.id,
+      variant_label: variantLabel,
+      stock_status: producto.stock_status,
+      quantity
+    });
+    setIsCartOpen(true);
   };
 
-  // Función para comprar ahora
-  const handleBuyNow = () => {
-    if (!producto || stock === 0) return;
+  const handleWhatsApp = () => {
+    if (!producto) return;
 
-    // Agregar al carrito con la cantidad seleccionada
-    for (let i = 0; i < quantity; i++) {
-      addToCart({
-        id: producto.id,
-        name: producto.name,
-        price: producto.price,
-        image: producto.image_url,
-        category: producto.category,
-        stock: stock
-      });
-    }
-
-    // Redirigir al checkout
-    navigate('/checkout');
+    const message = generateProductWhatsAppMessage({
+      ...producto,
+      price: selectedPrice,
+      color: selectedVariant?.name?.toLowerCase() === 'color' ? selectedVariant.value : producto.color,
+      variant_label: selectedVariant ? `${selectedVariant.name}: ${selectedVariant.value}` : null
+    }, quantity, settings.currency);
+    openWhatsApp(message, settings.whatsapp_number);
   };
 
   if (loading) {
@@ -68,7 +84,7 @@ const ProductoInfo = () => {
       <div className="producto-info">
         <div className="info-loading">
           <div className="loading-spinner"></div>
-          <p>Cargando información...</p>
+          <p>Cargando informacion...</p>
         </div>
       </div>
     );
@@ -80,7 +96,7 @@ const ProductoInfo = () => {
         <div className="info-error">
           <p>{error}</p>
           <button onClick={goBack} className="back-btn">
-            Volver al catálogo
+            Volver al catalogo
           </button>
         </div>
       </div>
@@ -89,142 +105,136 @@ const ProductoInfo = () => {
 
   if (!producto) return null;
 
-  // Manejar tanto 'stock' como 'Stock' por si acaso
-  const stock = producto.Stock ?? producto.stock ?? 0;
+  const activeStockStatus = selectedVariant?.stock_status || producto.stock_status;
+  const displayColor = selectedVariant?.name?.toLowerCase() === 'color'
+    ? selectedVariant.value
+    : producto.color;
+  const hasVariantOptions = producto.variants?.length > 1;
+  const variantName = producto.variants?.[0]?.name || 'Variante';
+  const isColorVariant = variantName.toLowerCase() === 'color';
+  const isUnavailable = producto.stock_status === 'Agotado' || activeStockStatus === 'Agotado';
 
   return (
     <div className="producto-info">
-      {/* Breadcrumb */}
       <div className="breadcrumb">
         <Link to="/">Inicio</Link>
-        <span className="separator">›</span>
-        <Link to="/catalogo">Catálogo</Link>
-        <span className="separator">›</span>
-        <a 
-          href="/catalogo" 
-          onClick={handleCategoryClick}
-          style={{ cursor: 'pointer' }}
-        >
+        <span className="separator">/</span>
+        <Link to="/catalogo">Catalogo</Link>
+        <span className="separator">/</span>
+        <a href="/catalogo" onClick={handleCategoryClick}>
           {producto.category}
         </a>
-        <span className="separator">›</span>
+        <span className="separator">/</span>
         <span className="current">{producto.name}</span>
       </div>
 
-      {/* Categoría */}
-      <span className="producto-category">{producto.category}</span>
-
-      {/* Nombre */}
       <h1 className="producto-name">{producto.name}</h1>
 
-      {/* Precio */}
       <div className="producto-price-section">
-        <p className="producto-price">
-          S/{parseFloat(producto.price).toLocaleString('es-PE', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          })}
-        </p>
-        <span className="price-tax">Incluye IGV</span>
+        {selectedPrice !== null && selectedPrice !== undefined && (
+          <p className="producto-price">{formatPrice(selectedPrice, settings.currency)}</p>
+        )}
       </div>
 
-      {/* Descripción */}
+      <a href="/catalogo" onClick={handleCategoryClick} className="producto-category">
+        {producto.category}
+      </a>
+
       {producto.description && (
         <div className="producto-description">
-          <h3>Descripción</h3>
+          <h3>Descripcion</h3>
           <p>{producto.description}</p>
         </div>
       )}
 
-      {/* Stock */}
-      <div className="producto-stock">
-        {stock > 0 ? (
-          <>
-            <span className="stock-available">✓ En stock</span>
-            {stock <= 5 && (
-              <span className="stock-low">
-                Solo quedan {stock} disponibles
-              </span>
-            )}
-          </>
-        ) : (
-          <span className="stock-unavailable">✗ Agotado</span>
-        )}
+      <div className="producto-specs">
+        {producto.material && <span>Material: {producto.material}</span>}
+        {displayColor && <span>Color: {displayColor}</span>}
+        {producto.size && <span>Medida: {producto.size}</span>}
       </div>
 
-      {/* Cantidad */}
-      {stock > 0 && (
+      <div className="producto-stock">
+        <span className={isUnavailable ? 'stock-unavailable' : 'stock-available'}>
+          {activeStockStatus}
+        </span>
+      </div>
+
+      {producto.tags?.length > 0 && (
+        <div className="producto-tags">
+          {producto.tags.map(tag => (
+            <span key={tag.id}>{tag.name}</span>
+          ))}
+        </div>
+      )}
+
+      {hasVariantOptions && (
+        <div className="producto-variants">
+          <div className="variants-header">
+            <h3>{isColorVariant ? 'Selecciona color' : 'Variantes disponibles'}</h3>
+            {selectedVariant && <span>{selectedVariant.value}</span>}
+          </div>
+
+          <div className={`variant-options ${isColorVariant ? 'color-options' : ''}`}>
+            {producto.variants.map(variant => {
+              const isActive = selectedVariant?.id === variant.id;
+              const isSoldOut = variant.stock_status === 'Agotado';
+
+              return (
+                <button
+                  key={variant.id}
+                  type="button"
+                  className={`variant-option ${isActive ? 'active' : ''}`}
+                  onClick={() => selectVariant(variant)}
+                  disabled={isSoldOut}
+                  aria-pressed={isActive}
+                >
+                  {isColorVariant && <span className="variant-swatch" style={getSwatchStyle(variant.value)} />}
+                  <span>{variant.value}</span>
+                  {isSoldOut && <small>Agotado</small>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {!isUnavailable && (
         <div className="producto-quantity">
-          <label>Cantidad</label>
+          <label>Cantidad para consultar</label>
           <div className="quantity-selector">
-            <button 
-              className="qty-btn"
-              onClick={decrementQuantity}
-              disabled={quantity <= 1}
-            >
-              −
+            <button className="qty-btn" onClick={decrementQuantity} disabled={quantity <= 1}>
+              -
             </button>
-            <input 
-              type="number" 
-              value={quantity} 
-              readOnly
-              className="qty-input"
-            />
-            <button 
-              className="qty-btn"
-              onClick={incrementQuantity}
-              disabled={quantity >= stock}
-            >
+            <input type="number" value={quantity} readOnly className="qty-input" />
+            <button className="qty-btn" onClick={incrementQuantity}>
               +
             </button>
           </div>
         </div>
       )}
 
-      {/* Botones de acción */}
       <div className="producto-actions">
-        <button 
+        <button
           className="add-to-cart-btn"
-          onClick={handleAddToCart}
-          disabled={stock === 0}
+          onClick={handleAddToSelection}
+          disabled={isUnavailable}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <path d="M16 10a4 4 0 0 1-8 0"></path>
-          </svg>
-          Agregar al Carrito
+          Agregar a mi lista
         </button>
-        <button 
-          className="buy-now-btn"
-          onClick={handleBuyNow}
-          disabled={stock === 0}
-        >
-          Comprar Ahora
+        <button className="buy-now-btn" onClick={handleWhatsApp}>
+          Consultar por WhatsApp
         </button>
       </div>
 
-      {/* Información adicional */}
       <div className="producto-features">
         <div className="feature-item">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-          </svg>
-          <span>Garantía de autenticidad</span>
+          <span>Consulta disponibilidad antes de comprar</span>
         </div>
         <div className="feature-item">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-            <line x1="1" y1="10" x2="23" y2="10"></line>
-          </svg>
-          <span>Pago seguro</span>
+          <span>Coordinacion de entrega por WhatsApp</span>
         </div>
         <div className="feature-item">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
-          </svg>
-          <span>Envío en 24-48 horas</span>
+          <span>Piezas seleccionadas con acabado artesanal</span>
         </div>
       </div>
     </div>

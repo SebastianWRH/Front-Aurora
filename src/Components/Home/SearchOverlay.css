@@ -59,7 +59,7 @@
   display: flex;
   gap: 20px;
   align-items: center;
-  background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #fffaf0 100%);
 }
 
 .search-input-wrapper {

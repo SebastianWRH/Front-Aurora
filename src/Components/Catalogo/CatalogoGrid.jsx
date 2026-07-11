@@ -5,7 +5,6 @@ import ProductCard from './ProductoCard';
 const CatalogoGrid = () => {
   const { sortedProducts, loading, error } = useCatalogo();
 
-  // Estado de carga
   if (loading) {
     return (
       <div className="catalogo-loading">
@@ -15,7 +14,6 @@ const CatalogoGrid = () => {
     );
   }
 
-  // Estado de error
   if (error) {
     return (
       <div className="catalogo-error">
@@ -27,11 +25,10 @@ const CatalogoGrid = () => {
     );
   }
 
-  // Sin productos
   if (sortedProducts.length === 0) {
     return (
       <div className="no-products">
-        <p>No se encontraron productos en esta categoría</p>
+        <p>No se encontraron productos con estos filtros</p>
       </div>
     );
   }

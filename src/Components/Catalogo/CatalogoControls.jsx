@@ -2,39 +2,57 @@ import React from 'react';
 import { useCatalogo } from '../../context/CatalogoContext';
 
 const CatalogoControls = () => {
-  const { 
-    selectedCategory, 
-    setSelectedCategory, 
-    sortBy, 
+  const {
+    categories,
+    selectedCategory,
+    setSelectedCategory,
+    searchTerm,
+    setSearchTerm,
+    sortBy,
     setSortBy,
-    filteredProducts 
+    filteredProducts
   } = useCatalogo();
-
-  const categories = ['Todos', 'Anillos', 'Collares', 'Pulseras', 'Aretes'];
 
   return (
     <div className="catalogo-controls">
+      <div className="catalogo-search-row">
+        <label className="filter-label" htmlFor="catalog-search">Buscar piezas</label>
+        <input
+          id="catalog-search"
+          className="catalog-search-input"
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          placeholder="Collares, perlas, dorado..."
+        />
+      </div>
+
       <div className="catalogo-controls-container">
-        {/* Filtro por Categoría */}
         <div className="filter-section">
-          <label className="filter-label">Categoría</label>
+          <label className="filter-label">Categoria</label>
           <div className="category-filters">
+            <button
+              className={`category-btn ${selectedCategory === 'Todos' ? 'active' : ''}`}
+              onClick={() => setSelectedCategory('Todos')}
+            >
+              Todos
+            </button>
             {categories.map(category => (
               <button
-                key={category}
-                className={`category-btn ${selectedCategory === category ? 'active' : ''}`}
-                onClick={() => setSelectedCategory(category)}
+                key={category.id}
+                className={`category-btn ${
+                  selectedCategory === category.name || selectedCategory === category.slug ? 'active' : ''
+                }`}
+                onClick={() => setSelectedCategory(category.slug)}
               >
-                {category}
+                {category.name}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Ordenar */}
         <div className="sort-section">
           <label className="sort-label">Ordenar por</label>
-          <select 
+          <select
             className="sort-select"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
@@ -47,7 +65,6 @@ const CatalogoControls = () => {
         </div>
       </div>
 
-      {/* Contador de Productos */}
       <div className="product-count">
         <span>{filteredProducts.length} {filteredProducts.length === 1 ? 'pieza' : 'piezas'}</span>
       </div>

@@ -46,7 +46,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #fffaf0 100%);
   position: relative;
 }
 
@@ -163,7 +163,7 @@
   gap: 15px;
   padding: 20px;
   margin-bottom: 15px;
-  background: #fafafa;
+  background: #ffffff;
   border: 1px solid rgba(212, 175, 55, 0.15);
   border-radius: 2px;
   position: relative;
@@ -219,6 +219,13 @@
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 5px;
+}
+
+.cart-item-variant {
+  display: block;
+  font-size: 12px;
+  color: #666666;
+  letter-spacing: 0.4px;
 }
 
 .cart-item-price {
@@ -318,7 +325,7 @@
 .cart-footer {
   padding: 25px;
   border-top: 1px solid rgba(212, 175, 55, 0.2);
-  background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #fffaf0 100%);
 }
 
 .cart-clear {
@@ -367,7 +374,7 @@
   letter-spacing: 1px;
 }
 
-.cart-checkout {
+.cart-whatsapp {
   width: 100%;
   padding: 16px;
   background: linear-gradient(135deg, #d4af37 0%, #c9a961 100%);
@@ -385,7 +392,7 @@
   overflow: hidden;
 }
 
-.cart-checkout::before {
+.cart-whatsapp::before {
   content: '';
   position: absolute;
   top: 0;
@@ -396,11 +403,11 @@
   transition: left 0.4s ease;
 }
 
-.cart-checkout:hover::before {
+.cart-whatsapp:hover::before {
   left: 100%;
 }
 
-.cart-checkout:hover {
+.cart-whatsapp:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 35px rgba(212, 175, 55, 0.35);
   background: linear-gradient(135deg, #c9a961 0%, #d4af37 100%);

@@ -1,135 +1,106 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { useSettings } from '../../hooks/useSettings';
+import { formatPrice, generateProductWhatsAppMessage, openWhatsApp } from '../../lib/whatsapp';
 
 const ProductCard = ({ product }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { addToCart, setIsCartOpen } = useCart();
+  const { settings } = useSettings();
 
-  // Imagen placeholder si hay error
-  const placeholderImage = 'https://via.placeholder.com/500x500/f5f5f5/d4af37?text=Aurora+Joyeria';
-
-  // Manejar tanto 'stock' como 'Stock' por si acaso
-  const stock = product.Stock ?? product.stock ?? 0;
+  const placeholderImage = 'https://via.placeholder.com/600x760/f7f1ea/9b7b52?text=Aurora';
+  const isUnavailable = product.stock_status === 'Agotado';
+  const hasOptions = product.has_variants || Number(product.variant_count || 0) > 1;
 
   const handleViewDetails = () => {
-    navigate(`/producto/${product.id}`);
+    navigate(`/producto/${product.slug || product.id}`);
   };
 
-  const handleAddToCart = (e) => {
-    e.stopPropagation(); // Evitar que se active el click del card
-    
-    if (stock === 0) return;
+  const handleAddToSelection = (event) => {
+    event.stopPropagation();
+    if (isUnavailable) return;
 
-    // Agregar producto al carrito
+    if (hasOptions) {
+      handleViewDetails();
+      return;
+    }
+
     addToCart({
       id: product.id,
+      slug: product.slug,
       name: product.name,
       price: product.price,
       image: product.image_url,
       category: product.category,
-      stock: stock
+      stock_status: product.stock_status
     });
+    setIsCartOpen(true);
+  };
 
-    // Opcional: Mostrar feedback visual (puedes implementar un toast/notification)
-    console.log('Producto agregado al carrito:', product.name);
+  const handleWhatsApp = (event) => {
+    event.stopPropagation();
+    const message = generateProductWhatsAppMessage(product, 1, settings.currency);
+    openWhatsApp(message, settings.whatsapp_number);
   };
 
   return (
-    <div 
+    <article
       className="product-card"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleViewDetails}
     >
       <div className="product-image-container">
-        <img 
-          src={imageError ? placeholderImage : product.image_url} 
+        <img
+          src={imageError ? placeholderImage : product.image_url}
           alt={product.name}
           className="product-image"
           onError={() => setImageError(true)}
         />
-        {product.featured && (
-          <span className="product-badge">Destacado</span>
-        )}
-        
-        {/* Badge de stock bajo */}
-        {stock <= 3 && stock > 0 && (
-          <span className="product-badge stock-badge" style={{
-            top: 'auto',
-            bottom: '15px',
-            background: 'linear-gradient(135deg, #e63946 0%, #c9184a 100%)'
-          }}>
-            ¡Últimas unidades!
-          </span>
-        )}
-        
-        {/* Badge sin stock */}
-        {stock === 0 && (
-          <span className="product-badge stock-badge" style={{
-            top: 'auto',
-            bottom: '15px',
-            background: 'linear-gradient(135deg, #6c757d 0%, #495057 100%)'
-          }}>
-            Agotado
-          </span>
-        )}
+
+        {product.featured && <span className="product-badge">Destacado</span>}
+        <span className={`product-badge stock-badge status-${product.stock_status?.replaceAll(' ', '-').toLowerCase()}`}>
+          {product.stock_status}
+        </span>
 
         <div className={`product-overlay ${isHovered ? 'visible' : ''}`}>
-          <button 
-            className="quick-view-btn"
-            onClick={handleViewDetails}
-          >
-            Ver Detalles
+          <button className="quick-view-btn" onClick={handleViewDetails}>
+            Ver detalle
           </button>
-          <button 
-            className="add-to-cart-btn"
-            onClick={handleAddToCart}
-            disabled={stock === 0}
-          >
-            {stock === 0 ? 'Agotado' : 'Agregar al Carrito'}
+          <button className="add-to-cart-btn" onClick={handleAddToSelection} disabled={isUnavailable}>
+            {isUnavailable ? 'Agotado' : hasOptions ? 'Elegir opcion' : 'Agregar a mi lista'}
+          </button>
+          <button className="whatsapp-card-btn" onClick={handleWhatsApp}>
+            Consultar por WhatsApp
           </button>
         </div>
       </div>
-      
+
       <div className="product-info">
         <span className="product-category">{product.category}</span>
         <h3 className="product-name">{product.name}</h3>
-        
-        {/* Mostrar descripción si existe */}
+
         {product.description && (
-          <p className="product-description" style={{
-            fontSize: '13px',
-            color: '#999',
-            marginBottom: '10px',
-            lineHeight: '1.5'
-          }}>
-            {product.description.substring(0, 60)}...
+          <p className="product-description">
+            {product.description.length > 86
+              ? `${product.description.substring(0, 86)}...`
+              : product.description}
           </p>
         )}
-        
-        <p className="product-price">
-          S/{parseFloat(product.price).toLocaleString('es-PE', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          })}
-        </p>
-        
-        {/* Indicador de stock */}
-        {stock > 0 && stock <= 5 && (
-          <p style={{
-            fontSize: '12px',
-            color: '#e63946',
-            marginTop: '5px',
-            fontWeight: '300'
-          }}>
-            Solo quedan {stock} disponibles
-          </p>
+
+        <div className="product-meta">
+          {product.material && <span>{product.material}</span>}
+          {product.color && <span>{product.color}</span>}
+        </div>
+
+        {product.price !== null && product.price !== undefined && (
+          <p className="product-price">{formatPrice(product.price, settings.currency)}</p>
         )}
       </div>
-    </div>
+    </article>
   );
 };
 

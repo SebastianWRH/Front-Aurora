@@ -1,9 +1,23 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getProductById } from '../lib/supabaseClient';
+import { getProductBySlug } from '../lib/catalogApi';
 import { useProducts } from '../hooks/useProducts';
 
 const ProductoContext = createContext();
+
+const getVariantImageIndex = (product, variant) => {
+  const images = product?.images || [];
+  if (!images.length || !variant) return 0;
+
+  if (variant.image_url) {
+    const imageIndex = images.findIndex(image => image.image_url === variant.image_url);
+    if (imageIndex >= 0) return imageIndex;
+  }
+
+  const variantIndex = product.variants?.findIndex(item => item.id === variant.id) ?? -1;
+  return variantIndex >= 0 && variantIndex < images.length ? variantIndex : 0;
+};
 
 export const useProducto = () => {
   const context = useContext(ProductoContext);
@@ -14,36 +28,35 @@ export const useProducto = () => {
 };
 
 export const ProductoProvider = ({ children }) => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const [producto, setProducto] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedVariantId, setSelectedVariantId] = useState(null);
   const [quantity, setQuantity] = useState(1);
-
-  // Obtener todos los productos para relacionados
   const { products: allProducts } = useProducts();
 
-  useEffect(() => {
-    if (id) {
-      fetchProducto();
-    }
-  }, [id]);
-
-  const fetchProducto = async () => {
+  const fetchProducto = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getProductById(id);
-      
+      const data = await getProductBySlug(slug);
+
       if (!data) {
         setError('Producto no encontrado');
         return;
       }
-      
+
+      const defaultVariant =
+        data.variants?.find(variant => variant.stock_status !== 'Agotado') ||
+        data.variants?.[0] ||
+        null;
+
       setProducto(data);
-      setSelectedImage(0);
+      setSelectedVariantId(defaultVariant?.id ?? null);
+      setSelectedImage(defaultVariant ? getVariantImageIndex(data, defaultVariant) : 0);
       setQuantity(1);
     } catch (err) {
       setError(err.message);
@@ -51,39 +64,47 @@ export const ProductoProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [slug]);
 
-  // Obtener productos relacionados (misma categoría, excluyendo el actual)
+  useEffect(() => {
+    if (slug) {
+      fetchProducto();
+    }
+  }, [slug, fetchProducto]);
+
   const relatedProducts = allProducts
-    .filter(p => p.category === producto?.category && p.id !== producto?.id)
+    .filter(p => p.category_slug === producto?.category_slug && p.id !== producto?.id)
     .slice(0, 4);
 
-  const handleAddToCart = () => {
-    console.log('Agregar al carrito:', {
-      producto: producto.id,
-      cantidad: quantity
-    });
-    // Aquí implementarías la lógica del carrito
-  };
+  const selectedVariant = useMemo(() => {
+    if (!producto?.variants?.length) return null;
+    return producto.variants.find(variant => variant.id === selectedVariantId) || null;
+  }, [producto, selectedVariantId]);
 
-  const handleBuyNow = () => {
-    console.log('Comprar ahora:', {
-      producto: producto.id,
-      cantidad: quantity
-    });
-    // Aquí implementarías la lógica de compra directa
-  };
+  const selectedPrice = useMemo(() => {
+    if (!producto) return null;
+    if (producto.price === null || producto.price === undefined) return producto.price;
+
+    const basePrice = Number(producto.price);
+    if (Number.isNaN(basePrice)) return producto.price;
+
+    return basePrice + Number(selectedVariant?.price_adjustment || 0);
+  }, [producto, selectedVariant]);
+
+  const selectVariant = useCallback((variant) => {
+    setSelectedVariantId(variant?.id ?? null);
+
+    if (producto && variant) {
+      setSelectedImage(getVariantImageIndex(producto, variant));
+    }
+  }, [producto]);
 
   const incrementQuantity = () => {
-    if (producto && quantity < producto.stock) {
-      setQuantity(quantity + 1);
-    }
+    setQuantity(current => current + 1);
   };
 
   const decrementQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(quantity - 1);
-    }
+    setQuantity(current => Math.max(1, current - 1));
   };
 
   const goBack = () => {
@@ -96,12 +117,13 @@ export const ProductoProvider = ({ children }) => {
     error,
     selectedImage,
     setSelectedImage,
+    selectedVariant,
+    selectVariant,
+    selectedPrice,
     quantity,
     setQuantity,
     incrementQuantity,
     decrementQuantity,
-    handleAddToCart,
-    handleBuyNow,
     relatedProducts,
     goBack
   };

@@ -1,13 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../../hooks/useProducts';
 import { useCart } from '../../context/CartContext';
+import { useSettings } from '../../hooks/useSettings';
+import { formatPrice } from '../../lib/whatsapp';
 
 function SearchOverlay({ open, onClose }) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredProducts, setFilteredProducts] = useState([]);
   const { products, loading } = useProducts();
-  const { addToCart } = useCart();
+  const { addToCart, setIsCartOpen } = useCart();
+  const { settings } = useSettings();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,8 +17,6 @@ function SearchOverlay({ open, onClose }) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
-      setSearchTerm('');
-      setFilteredProducts([]);
     }
 
     return () => {
@@ -24,13 +24,12 @@ function SearchOverlay({ open, onClose }) {
     };
   }, [open]);
 
-  useEffect(() => {
+  const filteredProducts = useMemo(() => {
     if (searchTerm.trim() === '') {
-      setFilteredProducts([]);
-      return;
+      return [];
     }
 
-    const filtered = products.filter(product => {
+    return products.filter(product => {
       const searchLower = searchTerm.toLowerCase();
       const nameMatch = product.name?.toLowerCase().includes(searchLower);
       const categoryMatch = product.category?.toLowerCase().includes(searchLower);
@@ -38,13 +37,16 @@ function SearchOverlay({ open, onClose }) {
       
       return nameMatch || categoryMatch || descriptionMatch;
     });
-
-    setFilteredProducts(filtered);
   }, [searchTerm, products]);
 
-  const handleProductClick = (productId) => {
-    navigate(`/producto/${productId}`);
+  const closeSearch = () => {
+    setSearchTerm('');
     onClose();
+  };
+
+  const handleProductClick = (product) => {
+    navigate(`/producto/${product.slug || product.id}`);
+    closeSearch();
   };
 
   const handleAddToCart = (e, product) => {
@@ -53,8 +55,11 @@ function SearchOverlay({ open, onClose }) {
       id: product.id,
       name: product.name,
       price: product.price,
-      image: product.image_url
+      image: product.image_url,
+      category: product.category,
+      stock_status: product.stock_status
     });
+    setIsCartOpen(true);
   };
 
   if (!open) return null;
@@ -62,7 +67,7 @@ function SearchOverlay({ open, onClose }) {
   return (
     <div className="search-overlay">
       {/* Backdrop */}
-      <div className="search-backdrop" onClick={onClose}></div>
+      <div className="search-backdrop" onClick={closeSearch}></div>
 
       {/* Search Container */}
       <div className="search-container">
@@ -100,7 +105,7 @@ function SearchOverlay({ open, onClose }) {
             )}
           </div>
 
-          <button className="search-close" onClick={onClose}>
+          <button className="search-close" onClick={closeSearch}>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
             </svg>
@@ -136,7 +141,7 @@ function SearchOverlay({ open, onClose }) {
                 <div 
                   key={product.id} 
                   className="search-product-card"
-                  onClick={() => handleProductClick(product.id)}
+                  onClick={() => handleProductClick(product)}
                 >
                   <div className="search-product-image">
                     <img 
@@ -151,7 +156,7 @@ function SearchOverlay({ open, onClose }) {
                   <div className="search-product-info">
                     <span className="search-product-category">{product.category}</span>
                     <h3 className="search-product-name">{product.name}</h3>
-                    <p className="search-product-price">S/ {product.price?.toFixed(2)}</p>
+                    <p className="search-product-price">{formatPrice(product.price, settings.currency)}</p>
                     
                     <button 
                       className="search-product-cart"
@@ -160,7 +165,7 @@ function SearchOverlay({ open, onClose }) {
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25A1.125 1.125 0 0 1 3.13 20.507l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007Z" />
                       </svg>
-                      Agregar
+                      A mi lista
                     </button>
                   </div>
                 </div>
