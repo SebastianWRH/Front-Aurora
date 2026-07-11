@@ -62,6 +62,7 @@ function Footer() {
           <ul className="aurora-footer-nav-list">
             <li><Link to="/catalogo?category=pulseras">Pulseras</Link></li>
             <li><Link to="/catalogo?category=aretes">Aretes</Link></li>
+            <li><Link to="/catalogo?category=collares">Collares</Link></li>
           </ul>
         </div>
 
