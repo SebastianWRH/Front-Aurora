@@ -5,22 +5,35 @@ import { getProductBySlug } from '../lib/catalogApi';
 import { useProducts } from '../hooks/useProducts';
 
 const ProductoContext = createContext();
+const fallbackImage = 'https://via.placeholder.com/800x1000/f7f1ea/9b7b52?text=Aurora';
+
+const uniqueImages = (images = []) => [...new Set(images.filter(Boolean))];
 
 const getGeneralGallery = (product) => {
   if (!product) return [];
 
   const mainImage = product.main_image?.image_url || product.image_url;
   const gallery = (product.gallery_images || []).map(image => image.image_url).filter(Boolean);
-  const images = [mainImage, ...gallery].filter(Boolean);
+  const images = uniqueImages([mainImage, ...gallery]);
 
-  if (images.length) return [...new Set(images)];
-  return (product.images || []).map(image => image.image_url).filter(Boolean);
+  if (images.length) return images;
+  const legacyImages = uniqueImages((product.images || []).map(image => image.image_url));
+  return legacyImages.length ? legacyImages : [fallbackImage];
 };
 
 const getVariantGallery = (product, variant) => {
-  const variantImages = (variant?.images || []).map(image => image.image_url).filter(Boolean);
+  const generalGallery = getGeneralGallery(product);
+  if (!variant) return generalGallery;
+
+  const variantCover = variant.main_image?.image_url || variant.image_url;
+  const variantGallery = (variant.gallery_images || []).map(image => image.image_url).filter(Boolean);
+  const variantLegacy = (variant.images || []).map(image => image.image_url).filter(Boolean);
+  const variantImages = uniqueImages([variantCover, ...variantGallery]);
+
   if (variantImages.length) return variantImages;
-  return getGeneralGallery(product);
+  if (variantLegacy.length) return uniqueImages(variantLegacy);
+
+  return generalGallery.length ? generalGallery : [fallbackImage];
 };
 
 export const useProducto = () => {
@@ -94,6 +107,12 @@ export const ProductoProvider = ({ children }) => {
     getVariantGallery(producto, selectedVariant)
   ), [producto, selectedVariant]);
 
+  useEffect(() => {
+    if (selectedImage >= galleryImages.length) {
+      setSelectedImage(0);
+    }
+  }, [galleryImages, selectedImage]);
+
   const selectVariant = useCallback((variant) => {
     setSelectedVariantId(variant?.id ?? null);
     setSelectedImage(0);
@@ -118,6 +137,7 @@ export const ProductoProvider = ({ children }) => {
     selectedImage,
     setSelectedImage,
     galleryImages,
+    fallbackImage,
     selectedVariant,
     selectVariant,
     selectedPrice,

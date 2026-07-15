@@ -703,6 +703,24 @@ body {
   margin: 0;
 }
 
+.variant-media-block {
+  display: grid;
+  gap: 12px;
+}
+
+.variant-media-block h4 {
+  color: #666666;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1.2px;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.compact-media-grid {
+  grid-template-columns: minmax(130px, 180px) minmax(180px, 1fr);
+}
+
 .admin-muted {
   color: #888888;
   font-size: 14px;

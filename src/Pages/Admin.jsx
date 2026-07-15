@@ -56,6 +56,8 @@ const createEmptyVariant = () => ({
   stock_quantity: '',
   stock_status: 'Disponible',
   is_active: true,
+  main_image: null,
+  gallery_images: [],
   images: [],
   remove_image_ids: []
 });
@@ -69,6 +71,26 @@ const getFilePreview = (file) => file ? URL.createObjectURL(file) : '';
 
 const isValidHexColor = (value = '') => !value || /^#[0-9a-fA-F]{6}$/.test(value);
 
+const getVariantMainImage = (variant) => (
+  variant.main_image ||
+  (variant.images || []).find(image => image.is_primary) ||
+  (variant.images || [])[0] ||
+  null
+);
+
+const getVariantGalleryImages = (variant) => {
+  if (Array.isArray(variant.gallery_images)) return variant.gallery_images;
+
+  const mainImage = getVariantMainImage(variant);
+  return (variant.images || []).filter(image => !mainImage || Number(image.id) !== Number(mainImage.id));
+};
+
+const getVariantImagesForSubmit = (variant) => {
+  const mainImage = getVariantMainImage(variant);
+  const galleryImages = getVariantGalleryImages(variant);
+  return [mainImage, ...galleryImages].filter(Boolean);
+};
+
 const normalizeVariantForSubmit = (variant, index) => ({
   id: variant.id || undefined,
   client_id: variant.client_id,
@@ -79,10 +101,12 @@ const normalizeVariantForSubmit = (variant, index) => ({
   stock_status: variant.stock_status || 'Consultar disponibilidad',
   is_active: Boolean(variant.is_active),
   sort_order: index,
-  images: (variant.images || []).map((image, imageIndex) => ({
+  main_image_id: getVariantMainImage(variant)?.id || null,
+  images: getVariantImagesForSubmit(variant).map((image, imageIndex) => ({
     id: image.id,
     sort_order: imageIndex,
-    alt_text: image.alt_text || variant.value
+    alt_text: image.alt_text || variant.value,
+    is_primary: Number(image.id) === Number(getVariantMainImage(variant)?.id)
   })),
   remove_image_ids: variant.remove_image_ids || []
 });
@@ -110,7 +134,8 @@ const buildProductFormData = ({
   mainImageFile,
   galleryFiles,
   variants,
-  variantFiles,
+  variantCoverFiles,
+  variantGalleryFiles,
   removedImageIds,
   removedMainImageId,
   existingGalleryImages
@@ -135,8 +160,13 @@ const buildProductFormData = ({
   if (mainImageFile) formData.append('main_image', mainImageFile);
   galleryFiles.forEach(file => formData.append('gallery_images', file));
   variants.forEach((variant) => {
-    (variantFiles[variant.client_id] || []).forEach(file => {
-      formData.append(`variant_images_${variant.client_id}`, file);
+    const coverFile = variantCoverFiles[variant.client_id];
+    if (coverFile) {
+      formData.append(`variant_cover_${variant.client_id}`, coverFile);
+    }
+
+    (variantGalleryFiles[variant.client_id] || []).forEach(file => {
+      formData.append(`variant_gallery_${variant.client_id}`, file);
     });
   });
 
@@ -295,7 +325,8 @@ const Admin = ({ initialView = 'dashboard' }) => {
   const [mainImageFile, setMainImageFile] = useState(null);
   const [galleryFiles, setGalleryFiles] = useState([]);
   const [productVariants, setProductVariants] = useState([]);
-  const [variantFiles, setVariantFiles] = useState({});
+  const [variantCoverFiles, setVariantCoverFiles] = useState({});
+  const [variantGalleryFiles, setVariantGalleryFiles] = useState({});
   const [removedMainImageId, setRemovedMainImageId] = useState(null);
   const [expandedProductId, setExpandedProductId] = useState(null);
   const [categoryFile, setCategoryFile] = useState(null);
@@ -380,22 +411,30 @@ const Admin = ({ initialView = 'dashboard' }) => {
       featured: Boolean(product.featured),
       is_active: Boolean(product.is_active)
     });
-    setProductVariants((product.variants || []).map((variant, index) => ({
-      client_id: `existing-${variant.id || index}`,
-      id: variant.id || null,
-      value: variant.value || variant.color_name || '',
-      color_hex: variant.color_hex || '',
-      stock_quantity: variant.stock_quantity ?? '',
-      stock_status: variant.stock_status || 'Consultar disponibilidad',
-      is_active: variant.is_active !== false,
-      images: variant.images || [],
-      remove_image_ids: []
-    })));
+    setProductVariants((product.variants || []).map((variant, index) => {
+      const mainImage = getVariantMainImage(variant);
+      const galleryImages = getVariantGalleryImages(variant);
+
+      return {
+        client_id: `existing-${variant.id || index}`,
+        id: variant.id || null,
+        value: variant.value || variant.color_name || '',
+        color_hex: variant.color_hex || '',
+        stock_quantity: variant.stock_quantity ?? '',
+        stock_status: variant.stock_status || 'Consultar disponibilidad',
+        is_active: variant.is_active !== false,
+        main_image: mainImage,
+        gallery_images: galleryImages,
+        images: [mainImage, ...galleryImages].filter(Boolean),
+        remove_image_ids: []
+      };
+    }));
     setRemovedImageIds([]);
     setRemovedMainImageId(null);
     setMainImageFile(null);
     setGalleryFiles([]);
-    setVariantFiles({});
+    setVariantCoverFiles({});
+    setVariantGalleryFiles({});
     setExpandedProductId(product.id);
     goToTab('products');
   };
@@ -406,7 +445,8 @@ const Admin = ({ initialView = 'dashboard' }) => {
     setMainImageFile(null);
     setGalleryFiles([]);
     setProductVariants([]);
-    setVariantFiles({});
+    setVariantCoverFiles({});
+    setVariantGalleryFiles({});
     setRemovedImageIds([]);
     setRemovedMainImageId(null);
     setExpandedProductId(null);
@@ -443,33 +483,106 @@ const Admin = ({ initialView = 'dashboard' }) => {
   const removeVariant = (clientId) => {
     if (!window.confirm('Eliminar este color y sus imagenes?')) return;
     setProductVariants(current => current.filter(variant => variant.client_id !== clientId));
-    setVariantFiles(current => {
+    setVariantCoverFiles(current => {
+      const next = { ...current };
+      delete next[clientId];
+      return next;
+    });
+    setVariantGalleryFiles(current => {
       const next = { ...current };
       delete next[clientId];
       return next;
     });
   };
 
-  const removeVariantImage = (clientId, imageId) => {
+  const addVariantRemovedImageId = (variant, imageId) => ([
+    ...new Set([...(variant.remove_image_ids || []), Number(imageId)])
+  ]);
+
+  const setVariantCoverFile = (clientId, file) => {
+    setVariantCoverFiles(current => ({ ...current, [clientId]: file }));
+
+    if (!file) return;
+
+    const variant = productVariants.find(item => item.client_id === clientId);
+    const mainImage = variant ? getVariantMainImage(variant) : null;
+
+    if (mainImage?.id) {
+      updateVariant(clientId, {
+        main_image: null,
+        images: getVariantGalleryImages(variant),
+        remove_image_ids: addVariantRemovedImageId(variant, mainImage.id)
+      });
+    }
+  };
+
+  const removeVariantCover = (clientId) => {
+    const variant = productVariants.find(item => item.client_id === clientId);
+    if (!variant) return;
+
+    const mainImage = getVariantMainImage(variant);
+    const galleryImages = getVariantGalleryImages(variant);
+
+    setVariantCoverFiles(current => {
+      const next = { ...current };
+      delete next[clientId];
+      return next;
+    });
+
     updateVariant(clientId, {
-      images: productVariants.find(variant => variant.client_id === clientId)?.images?.filter(image => image.id !== imageId) || [],
-      remove_image_ids: [
-        ...(productVariants.find(variant => variant.client_id === clientId)?.remove_image_ids || []),
-        Number(imageId)
-      ]
+      main_image: null,
+      images: galleryImages,
+      remove_image_ids: mainImage?.id
+        ? addVariantRemovedImageId(variant, mainImage.id)
+        : variant.remove_image_ids || []
     });
   };
 
-  const moveVariantImage = (clientId, imageId, direction) => {
+  const addVariantGalleryFiles = (clientId, files) => {
+    setVariantGalleryFiles(current => ({
+      ...current,
+      [clientId]: [
+        ...(current[clientId] || []),
+        ...files
+      ]
+    }));
+  };
+
+  const removePendingVariantGalleryFile = (clientId, fileIndex) => {
+    setVariantGalleryFiles(current => ({
+      ...current,
+      [clientId]: (current[clientId] || []).filter((_, index) => index !== fileIndex)
+    }));
+  };
+
+  const removeVariantGalleryImage = (clientId, imageId) => {
     const variant = productVariants.find(item => item.client_id === clientId);
     if (!variant) return;
-    const index = variant.images.findIndex(image => image.id === imageId);
+
+    const nextGallery = getVariantGalleryImages(variant).filter(image => Number(image.id) !== Number(imageId));
+    const mainImage = getVariantMainImage(variant);
+
+    updateVariant(clientId, {
+      gallery_images: nextGallery,
+      images: [mainImage, ...nextGallery].filter(Boolean),
+      remove_image_ids: addVariantRemovedImageId(variant, imageId)
+    });
+  };
+
+  const moveVariantGalleryImage = (clientId, imageId, direction) => {
+    const variant = productVariants.find(item => item.client_id === clientId);
+    if (!variant) return;
+    const galleryImages = getVariantGalleryImages(variant);
+    const index = galleryImages.findIndex(image => image.id === imageId);
     const nextIndex = index + direction;
-    if (index < 0 || nextIndex < 0 || nextIndex >= variant.images.length) return;
-    const nextImages = [...variant.images];
+    if (index < 0 || nextIndex < 0 || nextIndex >= galleryImages.length) return;
+    const nextImages = [...galleryImages];
     const [item] = nextImages.splice(index, 1);
     nextImages.splice(nextIndex, 0, item);
-    updateVariant(clientId, { images: nextImages });
+    updateVariant(clientId, {
+      gallery_images: nextImages,
+      images: [getVariantMainImage(variant), ...nextImages].filter(Boolean)
+    });
   };
 
   const submitProduct = async (event) => {
@@ -490,7 +603,8 @@ const Admin = ({ initialView = 'dashboard' }) => {
         mainImageFile,
         galleryFiles,
         variants: productVariants,
-        variantFiles,
+        variantCoverFiles,
+        variantGalleryFiles,
         removedImageIds,
         removedMainImageId,
         existingGalleryImages: visibleGalleryImages
@@ -817,31 +931,59 @@ const Admin = ({ initialView = 'dashboard' }) => {
                           <label><input type="checkbox" checked={variant.is_active} onChange={(event) => updateVariant(variant.client_id, { is_active: event.target.checked })} /> Disponible en catalogo</label>
                         </div>
 
-                        <div className="admin-image-list compact-images">
-                          {(variant.images || []).map((image, index) => (
-                            <div className="admin-image-item" key={image.id}>
-                              <img src={image.image_url} alt={image.alt_text || variant.value} />
-                              <div className="image-order-actions">
-                                <button type="button" onClick={() => moveVariantImage(variant.client_id, image.id, -1)} disabled={index === 0}>Subir</button>
-                                <button type="button" onClick={() => moveVariantImage(variant.client_id, image.id, 1)} disabled={index === variant.images.length - 1}>Bajar</button>
+                        <div className="variant-media-block">
+                          <h4>Imagen de portada del color</h4>
+                          <div className="admin-media-grid compact-media-grid">
+                            {variantCoverFiles[variant.client_id] ? (
+                              <div className="admin-image-item">
+                                <img src={getFilePreview(variantCoverFiles[variant.client_id])} alt={`Portada ${variant.value || 'color'}`} />
+                                <button type="button" onClick={() => removeVariantCover(variant.client_id)}>Eliminar portada</button>
                               </div>
-                              <button type="button" onClick={() => removeVariantImage(variant.client_id, image.id)}>Eliminar</button>
-                            </div>
-                          ))}
-                          {(variantFiles[variant.client_id] || []).map(file => (
-                            <div className="admin-image-item" key={`${variant.client_id}-${file.name}`}>
-                              <img src={getFilePreview(file)} alt={file.name} />
-                              <span>Nueva imagen</span>
-                            </div>
-                          ))}
+                            ) : getVariantMainImage(variant) ? (
+                              <div className="admin-image-item">
+                                <img src={getVariantMainImage(variant).image_url} alt={getVariantMainImage(variant).alt_text || variant.value} />
+                                <button type="button" onClick={() => removeVariantCover(variant.client_id)}>Eliminar portada</button>
+                              </div>
+                            ) : (
+                              <div className="admin-empty-media">Sin portada del color</div>
+                            )}
+
+                            <label className="admin-upload-box">Subir o reemplazar portada del color
+                              <input type="file" accept="image/*" onChange={(event) => setVariantCoverFile(variant.client_id, event.target.files?.[0] || null)} />
+                            </label>
+                          </div>
                         </div>
 
-                        <label className="admin-upload-box">Agregar imagenes de este color
-                          <input type="file" accept="image/*" multiple onChange={(event) => setVariantFiles(current => ({
-                            ...current,
-                            [variant.client_id]: Array.from(event.target.files || [])
-                          }))} />
-                        </label>
+                        <div className="variant-media-block">
+                          <h4>Galeria del color</h4>
+                          <div className="admin-image-list compact-images">
+                            {getVariantGalleryImages(variant).map((image, index) => {
+                              const galleryImages = getVariantGalleryImages(variant);
+
+                              return (
+                                <div className="admin-image-item" key={image.id}>
+                                  <img src={image.image_url} alt={image.alt_text || variant.value} />
+                                  <div className="image-order-actions">
+                                    <button type="button" onClick={() => moveVariantGalleryImage(variant.client_id, image.id, -1)} disabled={index === 0}>Subir</button>
+                                    <button type="button" onClick={() => moveVariantGalleryImage(variant.client_id, image.id, 1)} disabled={index === galleryImages.length - 1}>Bajar</button>
+                                  </div>
+                                  <button type="button" onClick={() => removeVariantGalleryImage(variant.client_id, image.id)}>Eliminar</button>
+                                </div>
+                              );
+                            })}
+                            {(variantGalleryFiles[variant.client_id] || []).map((file, fileIndex) => (
+                              <div className="admin-image-item" key={`${variant.client_id}-${file.name}-${fileIndex}`}>
+                                <img src={getFilePreview(file)} alt={file.name} />
+                                <span>Nueva imagen</span>
+                                <button type="button" onClick={() => removePendingVariantGalleryFile(variant.client_id, fileIndex)}>Quitar</button>
+                              </div>
+                            ))}
+                          </div>
+
+                          <label className="admin-upload-box">Agregar imagenes a la galeria del color
+                            <input type="file" accept="image/*" multiple onChange={(event) => addVariantGalleryFiles(variant.client_id, Array.from(event.target.files || []))} />
+                          </label>
+                        </div>
                       </article>
                     ))}
                     {!productVariants.length && <p className="admin-muted">Este producto no tiene colores definidos.</p>}
@@ -909,8 +1051,9 @@ const Admin = ({ initialView = 'dashboard' }) => {
                                 <div><i style={{ background: variant.color_hex || '#d7c6ad' }}></i><strong>{variant.value}</strong></div>
                                 <span>{variant.stock_status}{variant.stock_quantity !== null ? ` · Stock ${variant.stock_quantity}` : ''}</span>
                                 <div className="mini-image-row">
-                                  {(variant.images || []).map(image => <img key={image.id} src={image.image_url} alt={image.alt_text || variant.value} />)}
-                                  {!variant.images?.length && <small>Sin imagenes propias</small>}
+                                  {getVariantMainImage(variant) && <img src={getVariantMainImage(variant).image_url} alt={getVariantMainImage(variant).alt_text || variant.value} />}
+                                  {getVariantGalleryImages(variant).map(image => <img key={image.id} src={image.image_url} alt={image.alt_text || variant.value} />)}
+                                  {!getVariantMainImage(variant) && !getVariantGalleryImages(variant).length && <small>Sin imagenes propias</small>}
                                 </div>
                               </div>
                             ))}
