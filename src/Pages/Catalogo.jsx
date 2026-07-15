@@ -10,8 +10,10 @@ const Catalogo = () => {
     <CatalogoProvider>
       <div className="catalogo">
         <CatalogoHeader />
-        <CatalogoControls />
-        <CatalogoGrid />
+        <div className="catalogo-shop-layout">
+          <CatalogoControls />
+          <CatalogoGrid />
+        </div>
       </div>
     </CatalogoProvider>
   );

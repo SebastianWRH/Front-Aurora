@@ -3,7 +3,7 @@ import { useCatalogo } from '../../context/CatalogoContext';
 import ProductCard from './ProductoCard';
 
 const CatalogoGrid = () => {
-  const { sortedProducts, loading, error } = useCatalogo();
+  const { sortedProducts, loading, error, clearFilters, activeFilterCount } = useCatalogo();
 
   if (loading) {
     return (
@@ -28,7 +28,12 @@ const CatalogoGrid = () => {
   if (sortedProducts.length === 0) {
     return (
       <div className="no-products">
-        <p>No se encontraron productos con estos filtros</p>
+        <p>No encontramos productos con esos filtros.</p>
+        {activeFilterCount > 0 && (
+          <button type="button" className="clear-filters-btn" onClick={clearFilters}>
+            Limpiar filtros
+          </button>
+        )}
       </div>
     );
   }
