@@ -1,4 +1,4 @@
-const fallbackNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '51942346985';
+const fallbackNumber = '51942346985';
 
 export const normalizeWhatsAppNumber = (number = fallbackNumber) => {
   return String(number).replace(/[^\d]/g, '');

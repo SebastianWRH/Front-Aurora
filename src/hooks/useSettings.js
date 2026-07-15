@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { getSettings } from '../lib/catalogApi';
 
 const fallbackSettings = {
-  store_name: import.meta.env.VITE_STORE_NAME || 'Aurora Catalogo',
-  whatsapp_number: import.meta.env.VITE_WHATSAPP_NUMBER || '51942346985',
-  instagram_url: import.meta.env.VITE_INSTAGRAM_URL || 'https://www.instagram.com/au.rora_pe/',
+  store_name: 'Aurora Catalogo',
+  whatsapp_number: '51942346985',
+  instagram_url: 'https://www.instagram.com/au.rora_pe/',
   currency: 'S/',
   default_whatsapp_message: 'Hola, me interesa consultar disponibilidad y coordinar una compra.'
 };
