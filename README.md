@@ -51,6 +51,7 @@ Rutas:
 Flujos disponibles:
 
 - Login con cookie `HttpOnly` emitida por el backend.
+- Consulta silenciosa de sesion en login con `GET /api/admin/auth/status`.
 - Validacion de sesion con `GET /api/admin/auth/me`.
 - Crear, editar y eliminar productos.
 - Subir multiples imagenes de producto con `multipart/form-data`.

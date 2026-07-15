@@ -92,6 +92,11 @@ export const getCurrentAdmin = async () => {
   return data.admin || null;
 };
 
+export const getAdminSessionStatus = async () => {
+  const data = await adminFetch('/api/admin/auth/status');
+  return data.admin || null;
+};
+
 export const getAdminProducts = async () => {
   const data = await adminFetch('/api/admin/products');
   return data.products || [];

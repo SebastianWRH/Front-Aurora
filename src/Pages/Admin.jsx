@@ -11,6 +11,7 @@ import {
   deleteAdminProductImage,
   getAdminCategories,
   getAdminProducts,
+  getAdminSessionStatus,
   getAdminSettings,
   getCurrentAdmin,
   updateAdminCategory,
@@ -115,9 +116,14 @@ export const AdminLogin = () => {
 
     const redirectIfAuthenticated = async () => {
       try {
-        await getCurrentAdmin();
-        if (isMounted) navigate('/admin/dashboard', { replace: true });
+        const admin = await getAdminSessionStatus();
+        if (isMounted && admin) {
+          navigate('/admin/dashboard', { replace: true });
+          return;
+        }
       } catch {
+        // Login must remain available even if the optional session probe fails.
+      } finally {
         if (isMounted) setCheckingSession(false);
       }
     };
