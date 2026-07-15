@@ -606,6 +606,225 @@ body {
   margin-top: 8px;
 }
 
+.admin-form-section {
+  border-top: 1px solid rgba(212, 175, 55, 0.16);
+  display: grid;
+  gap: 18px;
+  padding-top: 24px;
+}
+
+.admin-form-section h3,
+.admin-product-details h4 {
+  color: #333333;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 1.4px;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.panel-header.compact {
+  margin-bottom: 0;
+}
+
+.admin-media-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(180px, 260px) minmax(220px, 1fr);
+}
+
+.admin-upload-box,
+.admin-empty-media {
+  align-items: center;
+  background: #fafafa;
+  border: 1px dashed rgba(212, 175, 55, 0.45);
+  color: #666666;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  min-height: 160px;
+  padding: 20px;
+  text-align: center;
+}
+
+.admin-upload-box input {
+  display: none;
+}
+
+.image-order-actions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.variant-editor-list,
+.admin-products-list,
+.admin-product-details,
+.admin-variant-summary {
+  display: grid;
+  gap: 18px;
+}
+
+.variant-editor-card,
+.admin-product-row {
+  background: #ffffff;
+  border: 1px solid rgba(212, 175, 55, 0.16);
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+}
+
+.variant-card-header {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.variant-card-header strong {
+  color: #333333;
+  flex: 1;
+  font-weight: 500;
+}
+
+.variant-swatch-preview,
+.variant-chip i,
+.variant-summary-card i {
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 999px;
+  display: inline-block;
+  flex: 0 0 auto;
+  height: 20px;
+  width: 20px;
+}
+
+.compact-images {
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  margin: 0;
+}
+
+.admin-muted {
+  color: #888888;
+  font-size: 14px;
+  margin: 0;
+}
+
+.admin-product-preview {
+  align-items: center;
+  background: #fafafa;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 130px minmax(0, 1fr);
+  padding: 16px;
+}
+
+.admin-product-preview img {
+  aspect-ratio: 1;
+  object-fit: cover;
+  width: 100%;
+}
+
+.admin-product-preview span {
+  color: #d4af37;
+  display: block;
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.admin-product-preview strong {
+  color: #333333;
+  display: block;
+  font-size: 20px;
+  font-weight: 400;
+  margin: 8px 0;
+}
+
+.variant-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.variant-chip {
+  align-items: center;
+  border: 1px solid rgba(212, 175, 55, 0.24);
+  color: #666666;
+  display: inline-flex;
+  font-size: 12px;
+  gap: 6px;
+  padding: 6px 10px;
+}
+
+.admin-product-main {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 120px minmax(0, 1fr);
+}
+
+.admin-product-cover img {
+  aspect-ratio: 1;
+  background: #fafafa;
+  object-fit: cover;
+  width: 100%;
+}
+
+.admin-product-main h3 {
+  color: #333333;
+  font-size: 20px;
+  font-weight: 400;
+  margin: 6px 0 8px;
+}
+
+.admin-product-main p {
+  color: #666666;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.admin-product-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.admin-product-meta span {
+  background: #fafafa;
+  border: 1px solid rgba(212, 175, 55, 0.16);
+  color: #666666;
+  font-size: 12px;
+  padding: 6px 10px;
+}
+
+.mini-image-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mini-image-row img {
+  aspect-ratio: 1;
+  border: 1px solid rgba(212, 175, 55, 0.16);
+  object-fit: cover;
+  width: 56px;
+}
+
+.variant-summary-card {
+  border: 1px solid rgba(212, 175, 55, 0.16);
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.variant-summary-card > div:first-child {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
 .refresh-btn {
   padding: 12px 20px;
   background: white;
@@ -1158,6 +1377,12 @@ body {
 
   .admin-form {
     padding: 20px;
+  }
+
+  .admin-media-grid,
+  .admin-product-preview,
+  .admin-product-main {
+    grid-template-columns: 1fr;
   }
 
   .admin-actions {

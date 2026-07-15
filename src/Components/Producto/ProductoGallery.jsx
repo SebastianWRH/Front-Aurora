@@ -2,7 +2,7 @@ import React from 'react';
 import { useProducto } from '../../context/ProductoContext';
 
 const ProductoGallery = () => {
-  const { producto, loading, selectedImage, setSelectedImage, selectedVariant, selectVariant } = useProducto();
+  const { producto, loading, selectedImage, setSelectedImage, selectedVariant, galleryImages } = useProducto();
 
   if (loading) {
     return (
@@ -16,19 +16,10 @@ const ProductoGallery = () => {
 
   if (!producto) return null;
 
-  const images = producto.images?.length
-    ? producto.images.map(image => image.image_url)
-    : [producto.image_url];
+  const images = galleryImages?.length ? galleryImages : [producto.image_url].filter(Boolean);
   const activeStockStatus = selectedVariant?.stock_status || producto.stock_status;
 
   const handleThumbnailClick = (index) => {
-    const nextVariant = producto.variants?.find(variant => variant.image_url === images[index]);
-
-    if (nextVariant) {
-      selectVariant(nextVariant);
-      return;
-    }
-
     setSelectedImage(index);
   };
 

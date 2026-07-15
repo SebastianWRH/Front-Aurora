@@ -21,6 +21,10 @@ const getSwatchStyle = (value = '') => {
   return { background: colorSwatches[colorKey] || '#d7c6ad' };
 };
 
+const getVariantSwatchStyle = (variant) => ({
+  background: variant.color_hex || getSwatchStyle(variant.value).background
+});
+
 const ProductoInfo = () => {
   const {
     producto,
@@ -56,7 +60,7 @@ const ProductoInfo = () => {
       slug: producto.slug,
       name: producto.name,
       price: selectedPrice,
-      image: selectedVariant?.image_url || producto.image_url,
+      image: selectedVariant?.images?.[0]?.image_url || producto.image_url,
       category: producto.category,
       color: selectedVariant?.name?.toLowerCase() === 'color' ? selectedVariant.value : producto.color,
       variant_id: selectedVariant?.id,
@@ -109,10 +113,10 @@ const ProductoInfo = () => {
   const displayColor = selectedVariant?.name?.toLowerCase() === 'color'
     ? selectedVariant.value
     : producto.color;
-  const hasVariantOptions = producto.variants?.length > 1;
+  const hasVariantOptions = producto.variants?.length > 0;
   const variantName = producto.variants?.[0]?.name || 'Variante';
   const isColorVariant = variantName.toLowerCase() === 'color';
-  const isUnavailable = producto.stock_status === 'Agotado' || activeStockStatus === 'Agotado';
+  const isUnavailable = producto.stock_status === 'Agotado' || activeStockStatus === 'Agotado' || selectedVariant?.is_active === false;
 
   return (
     <div className="producto-info">
@@ -177,7 +181,7 @@ const ProductoInfo = () => {
           <div className={`variant-options ${isColorVariant ? 'color-options' : ''}`}>
             {producto.variants.map(variant => {
               const isActive = selectedVariant?.id === variant.id;
-              const isSoldOut = variant.stock_status === 'Agotado';
+              const isSoldOut = variant.stock_status === 'Agotado' || variant.is_active === false;
 
               return (
                 <button
@@ -188,8 +192,9 @@ const ProductoInfo = () => {
                   disabled={isSoldOut}
                   aria-pressed={isActive}
                 >
-                  {isColorVariant && <span className="variant-swatch" style={getSwatchStyle(variant.value)} />}
+                  {isColorVariant && <span className="variant-swatch" style={getVariantSwatchStyle(variant)} />}
                   <span>{variant.value}</span>
+                  {variant.stock_quantity !== null && variant.stock_quantity !== undefined && <small>Stock {variant.stock_quantity}</small>}
                   {isSoldOut && <small>Agotado</small>}
                 </button>
               );

@@ -6,17 +6,21 @@ import { useProducts } from '../hooks/useProducts';
 
 const ProductoContext = createContext();
 
-const getVariantImageIndex = (product, variant) => {
-  const images = product?.images || [];
-  if (!images.length || !variant) return 0;
+const getGeneralGallery = (product) => {
+  if (!product) return [];
 
-  if (variant.image_url) {
-    const imageIndex = images.findIndex(image => image.image_url === variant.image_url);
-    if (imageIndex >= 0) return imageIndex;
-  }
+  const mainImage = product.main_image?.image_url || product.image_url;
+  const gallery = (product.gallery_images || []).map(image => image.image_url).filter(Boolean);
+  const images = [mainImage, ...gallery].filter(Boolean);
 
-  const variantIndex = product.variants?.findIndex(item => item.id === variant.id) ?? -1;
-  return variantIndex >= 0 && variantIndex < images.length ? variantIndex : 0;
+  if (images.length) return [...new Set(images)];
+  return (product.images || []).map(image => image.image_url).filter(Boolean);
+};
+
+const getVariantGallery = (product, variant) => {
+  const variantImages = (variant?.images || []).map(image => image.image_url).filter(Boolean);
+  if (variantImages.length) return variantImages;
+  return getGeneralGallery(product);
 };
 
 export const useProducto = () => {
@@ -49,14 +53,9 @@ export const ProductoProvider = ({ children }) => {
         return;
       }
 
-      const defaultVariant =
-        data.variants?.find(variant => variant.stock_status !== 'Agotado') ||
-        data.variants?.[0] ||
-        null;
-
       setProducto(data);
-      setSelectedVariantId(defaultVariant?.id ?? null);
-      setSelectedImage(defaultVariant ? getVariantImageIndex(data, defaultVariant) : 0);
+      setSelectedVariantId(null);
+      setSelectedImage(0);
       setQuantity(1);
     } catch (err) {
       setError(err.message);
@@ -91,13 +90,14 @@ export const ProductoProvider = ({ children }) => {
     return basePrice + Number(selectedVariant?.price_adjustment || 0);
   }, [producto, selectedVariant]);
 
+  const galleryImages = useMemo(() => (
+    getVariantGallery(producto, selectedVariant)
+  ), [producto, selectedVariant]);
+
   const selectVariant = useCallback((variant) => {
     setSelectedVariantId(variant?.id ?? null);
-
-    if (producto && variant) {
-      setSelectedImage(getVariantImageIndex(producto, variant));
-    }
-  }, [producto]);
+    setSelectedImage(0);
+  }, []);
 
   const incrementQuantity = () => {
     setQuantity(current => current + 1);
@@ -117,6 +117,7 @@ export const ProductoProvider = ({ children }) => {
     error,
     selectedImage,
     setSelectedImage,
+    galleryImages,
     selectedVariant,
     selectVariant,
     selectedPrice,
