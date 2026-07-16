@@ -4,7 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { useSettings } from '../../hooks/useSettings';
 import { formatPrice, generateProductWhatsAppMessage, openWhatsApp } from '../../lib/whatsapp';
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, catalogLayout = false }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
   const navigate = useNavigate();
@@ -48,7 +48,7 @@ const ProductCard = ({ product }) => {
 
   return (
     <article
-      className="product-card"
+      className={`product-card ${catalogLayout ? 'catalog-product-card' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleViewDetails}
@@ -80,21 +80,30 @@ const ProductCard = ({ product }) => {
       </div>
 
       <div className="product-info">
-        <span className="product-category">{product.category}</span>
-        <h3 className="product-name">{product.name}</h3>
+        {catalogLayout ? (
+          <>
+            <h3 className="product-name">{product.name}</h3>
+            {product.category && <span className="product-category">{product.category}</span>}
+          </>
+        ) : (
+          <>
+            <span className="product-category">{product.category}</span>
+            <h3 className="product-name">{product.name}</h3>
 
-        {product.description && (
-          <p className="product-description">
-            {product.description.length > 86
-              ? `${product.description.substring(0, 86)}...`
-              : product.description}
-          </p>
+            {product.description && (
+              <p className="product-description">
+                {product.description.length > 86
+                  ? `${product.description.substring(0, 86)}...`
+                  : product.description}
+              </p>
+            )}
+
+            <div className="product-meta">
+              {product.material && <span>{product.material}</span>}
+              {product.color && <span>{product.color}</span>}
+            </div>
+          </>
         )}
-
-        <div className="product-meta">
-          {product.material && <span>{product.material}</span>}
-          {product.color && <span>{product.color}</span>}
-        </div>
 
         {product.price !== null && product.price !== undefined && (
           <p className="product-price">{formatPrice(product.price, settings.currency)}</p>

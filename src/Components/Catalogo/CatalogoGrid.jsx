@@ -41,7 +41,7 @@ const CatalogoGrid = () => {
   return (
     <div className="catalogo-grid">
       {sortedProducts.map(product => (
-        <ProductCard key={product.id} product={product} />
+        <ProductCard key={product.id} product={product} catalogLayout />
       ))}
     </div>
   );
