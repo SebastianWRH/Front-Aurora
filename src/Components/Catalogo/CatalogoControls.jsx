@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCatalogo } from '../../context/CatalogoContext';
 
 const formatCount = (count) => `${count} ${count === 1 ? 'producto encontrado' : 'productos encontrados'}`;
@@ -56,7 +56,228 @@ const SortSelect = ({ sortBy, setSortBy }) => (
   </select>
 );
 
+const FilterPanel = ({
+  titleId,
+  countLabel,
+  activeFilterCount,
+  clearFilters,
+  filterOptions,
+  filters,
+  hasCollectionFilters,
+  hasPriceRange,
+  idScope,
+  onClose,
+  onApply,
+  priceBounds,
+  priceMaxValue,
+  priceMinValue,
+  setSortBy,
+  sortBy,
+  toggleArrayFilter,
+  updateFilter,
+  updatePrice
+}) => (
+  <aside className="catalogo-filter-panel" aria-labelledby={titleId}>
+    <div className="filter-panel-header">
+      <div>
+        <span id={titleId} className="filter-label">Filtros</span>
+        <p>{countLabel}</p>
+      </div>
+
+      {onClose ? (
+        <button type="button" className="filter-modal-close" onClick={onClose} aria-label="Cerrar filtros">
+          X
+        </button>
+      ) : activeFilterCount > 0 && (
+        <button type="button" className="clear-filters-btn" onClick={clearFilters}>
+          Limpiar filtros
+        </button>
+      )}
+    </div>
+
+    {activeFilterCount > 0 && (
+      <div className="active-filter-summary">
+        {activeFilterCount} {activeFilterCount === 1 ? 'filtro activo' : 'filtros activos'}
+      </div>
+    )}
+
+    {filterOptions.categories.length > 0 && (
+      <FilterAccordion title="Categoria">
+        <div className="filter-options">
+          <OptionButton
+            active={filters.category === 'Todos'}
+            onClick={() => updateFilter('category', 'Todos')}
+          >
+            Todos
+          </OptionButton>
+
+          {filterOptions.categories.map(category => (
+            <OptionButton
+              key={category.value}
+              active={filters.category === category.value}
+              onClick={() => updateFilter('category', category.value)}
+            >
+              {category.label}
+            </OptionButton>
+          ))}
+        </div>
+      </FilterAccordion>
+    )}
+
+    {hasPriceRange && (
+      <FilterAccordion title="Precio">
+        <div className="price-filter">
+          <div className="price-range-values">
+            <span>S/ {priceMinValue}</span>
+            <span>S/ {priceMaxValue}</span>
+          </div>
+
+          <div className="price-sliders">
+            <input
+              type="range"
+              min={priceBounds.min}
+              max={priceBounds.max}
+              value={priceMinValue}
+              onChange={(event) => updatePrice('priceMin', event.target.value)}
+              aria-label="Precio minimo"
+            />
+            <input
+              type="range"
+              min={priceBounds.min}
+              max={priceBounds.max}
+              value={priceMaxValue}
+              onChange={(event) => updatePrice('priceMax', event.target.value)}
+              aria-label="Precio maximo"
+            />
+          </div>
+
+          <div className="price-inputs">
+            <label>
+              Minimo
+              <input
+                type="number"
+                min={priceBounds.min}
+                max={priceBounds.max}
+                value={filters.priceMin}
+                placeholder={String(priceBounds.min)}
+                onChange={(event) => updatePrice('priceMin', event.target.value)}
+              />
+            </label>
+            <label>
+              Maximo
+              <input
+                type="number"
+                min={priceBounds.min}
+                max={priceBounds.max}
+                value={filters.priceMax}
+                placeholder={String(priceBounds.max)}
+                onChange={(event) => updatePrice('priceMax', event.target.value)}
+              />
+            </label>
+          </div>
+        </div>
+      </FilterAccordion>
+    )}
+
+    {filterOptions.materials.length > 0 && (
+      <FilterAccordion title="Material">
+        <div className="filter-options">
+          {filterOptions.materials.map(material => (
+            <CheckboxOption
+              key={material}
+              id={filterId(`${idScope}-material`, material)}
+              checked={filters.materials.includes(material)}
+              onChange={() => toggleArrayFilter('materials', material)}
+            >
+              {material}
+            </CheckboxOption>
+          ))}
+        </div>
+      </FilterAccordion>
+    )}
+
+    {filterOptions.colors.length > 0 && (
+      <FilterAccordion title="Color">
+        <div className="filter-options">
+          {filterOptions.colors.map(color => (
+            <CheckboxOption
+              key={color}
+              id={filterId(`${idScope}-color`, color)}
+              checked={filters.colors.includes(color)}
+              onChange={() => toggleArrayFilter('colors', color)}
+            >
+              {color}
+            </CheckboxOption>
+          ))}
+        </div>
+      </FilterAccordion>
+    )}
+
+    {filterOptions.hasAvailability && filterOptions.availability.length > 0 && (
+      <FilterAccordion title="Disponibilidad">
+        <div className="filter-options">
+          {filterOptions.availability.map(option => (
+            <CheckboxOption
+              key={option.value}
+              id={filterId(`${idScope}-availability`, option.value)}
+              checked={filters.availability.includes(option.value)}
+              onChange={() => toggleArrayFilter('availability', option.value)}
+              count={option.count}
+            >
+              {option.label}
+            </CheckboxOption>
+          ))}
+        </div>
+      </FilterAccordion>
+    )}
+
+    {hasCollectionFilters && (
+      <FilterAccordion title="Coleccion">
+        <div className="filter-options">
+          {filterOptions.hasFeatured && (
+            <CheckboxOption
+              id={`${idScope}-filter-featured`}
+              checked={filters.featured}
+              onChange={() => updateFilter('featured', !filters.featured)}
+            >
+              Productos destacados
+            </CheckboxOption>
+          )}
+
+          {filterOptions.hasNew && (
+            <CheckboxOption
+              id={`${idScope}-filter-new`}
+              checked={filters.isNew}
+              onChange={() => updateFilter('isNew', !filters.isNew)}
+            >
+              Productos nuevos
+            </CheckboxOption>
+          )}
+        </div>
+      </FilterAccordion>
+    )}
+
+    <FilterAccordion title="Ordenar" defaultOpen={false}>
+      <SortSelect sortBy={sortBy} setSortBy={setSortBy} />
+    </FilterAccordion>
+
+    {onApply && (
+      <div className="filter-modal-actions">
+        {activeFilterCount > 0 && (
+          <button type="button" className="clear-filters-btn" onClick={clearFilters}>
+            Limpiar filtros
+          </button>
+        )}
+        <button type="button" className="apply-filters-btn" onClick={onApply}>
+          Aplicar filtros
+        </button>
+      </div>
+    )}
+  </aside>
+);
+
 const CatalogoControls = () => {
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const {
     filters,
     filterOptions,
@@ -75,6 +296,17 @@ const CatalogoControls = () => {
   const priceMinValue = filters.priceMin === '' ? priceBounds.min : Number(filters.priceMin);
   const priceMaxValue = filters.priceMax === '' ? priceBounds.max : Number(filters.priceMax);
   const hasCollectionFilters = filterOptions.hasFeatured || filterOptions.hasNew;
+
+  useEffect(() => {
+    if (!isMobileFilterOpen) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isMobileFilterOpen]);
 
   const updatePrice = (key, value) => {
     if (value === '') {
@@ -97,191 +329,77 @@ const CatalogoControls = () => {
 
   return (
     <>
-      <aside className="catalogo-filter-panel" aria-label="Filtros del catalogo">
-        <div className="filter-panel-header">
-          <div>
-            <span className="filter-label">Filtros</span>
-            <p>{countLabel}</p>
-          </div>
-
-          {activeFilterCount > 0 && (
-            <button type="button" className="clear-filters-btn" onClick={clearFilters}>
-              Limpiar filtros
-            </button>
-          )}
-        </div>
-
-        {activeFilterCount > 0 && (
-          <div className="active-filter-summary">
-            {activeFilterCount} {activeFilterCount === 1 ? 'filtro activo' : 'filtros activos'}
-          </div>
-        )}
-
-        {filterOptions.categories.length > 0 && (
-          <FilterAccordion title="Categoria">
-            <div className="filter-options">
-              <OptionButton
-                active={filters.category === 'Todos'}
-                onClick={() => updateFilter('category', 'Todos')}
-              >
-                Todos
-              </OptionButton>
-
-              {filterOptions.categories.map(category => (
-                <OptionButton
-                  key={category.value}
-                  active={filters.category === category.value}
-                  onClick={() => updateFilter('category', category.value)}
-                >
-                  {category.label}
-                </OptionButton>
-              ))}
-            </div>
-          </FilterAccordion>
-        )}
-
-        {hasPriceRange && (
-          <FilterAccordion title="Precio">
-            <div className="price-filter">
-              <div className="price-range-values">
-                <span>S/ {priceMinValue}</span>
-                <span>S/ {priceMaxValue}</span>
-              </div>
-
-              <div className="price-sliders">
-                <input
-                  type="range"
-                  min={priceBounds.min}
-                  max={priceBounds.max}
-                  value={priceMinValue}
-                  onChange={(event) => updatePrice('priceMin', event.target.value)}
-                  aria-label="Precio minimo"
-                />
-                <input
-                  type="range"
-                  min={priceBounds.min}
-                  max={priceBounds.max}
-                  value={priceMaxValue}
-                  onChange={(event) => updatePrice('priceMax', event.target.value)}
-                  aria-label="Precio maximo"
-                />
-              </div>
-
-              <div className="price-inputs">
-                <label>
-                  Minimo
-                  <input
-                    type="number"
-                    min={priceBounds.min}
-                    max={priceBounds.max}
-                    value={filters.priceMin}
-                    placeholder={String(priceBounds.min)}
-                    onChange={(event) => updatePrice('priceMin', event.target.value)}
-                  />
-                </label>
-                <label>
-                  Maximo
-                  <input
-                    type="number"
-                    min={priceBounds.min}
-                    max={priceBounds.max}
-                    value={filters.priceMax}
-                    placeholder={String(priceBounds.max)}
-                    onChange={(event) => updatePrice('priceMax', event.target.value)}
-                  />
-                </label>
-              </div>
-            </div>
-          </FilterAccordion>
-        )}
-
-        {filterOptions.materials.length > 0 && (
-          <FilterAccordion title="Material">
-            <div className="filter-options">
-              {filterOptions.materials.map(material => (
-                <CheckboxOption
-                  key={material}
-                  id={filterId('material', material)}
-                  checked={filters.materials.includes(material)}
-                  onChange={() => toggleArrayFilter('materials', material)}
-                >
-                  {material}
-                </CheckboxOption>
-              ))}
-            </div>
-          </FilterAccordion>
-        )}
-
-        {filterOptions.colors.length > 0 && (
-          <FilterAccordion title="Color">
-            <div className="filter-options">
-              {filterOptions.colors.map(color => (
-                <CheckboxOption
-                  key={color}
-                  id={filterId('color', color)}
-                  checked={filters.colors.includes(color)}
-                  onChange={() => toggleArrayFilter('colors', color)}
-                >
-                  {color}
-                </CheckboxOption>
-              ))}
-            </div>
-          </FilterAccordion>
-        )}
-
-        {filterOptions.hasAvailability && filterOptions.availability.length > 0 && (
-          <FilterAccordion title="Disponibilidad">
-            <div className="filter-options">
-              {filterOptions.availability.map(option => (
-                <CheckboxOption
-                  key={option.value}
-                  id={filterId('availability', option.value)}
-                  checked={filters.availability.includes(option.value)}
-                  onChange={() => toggleArrayFilter('availability', option.value)}
-                  count={option.count}
-                >
-                  {option.label}
-                </CheckboxOption>
-              ))}
-            </div>
-          </FilterAccordion>
-        )}
-
-        {hasCollectionFilters && (
-          <FilterAccordion title="Coleccion">
-            <div className="filter-options">
-              {filterOptions.hasFeatured && (
-                <CheckboxOption
-                  id="filter-featured"
-                  checked={filters.featured}
-                  onChange={() => updateFilter('featured', !filters.featured)}
-                >
-                  Productos destacados
-                </CheckboxOption>
-              )}
-
-              {filterOptions.hasNew && (
-                <CheckboxOption
-                  id="filter-new"
-                  checked={filters.isNew}
-                  onChange={() => updateFilter('isNew', !filters.isNew)}
-                >
-                  Productos nuevos
-                </CheckboxOption>
-              )}
-            </div>
-          </FilterAccordion>
-        )}
-
-        <FilterAccordion title="Ordenar" defaultOpen={false}>
-          <SortSelect sortBy={sortBy} setSortBy={setSortBy} />
-        </FilterAccordion>
-      </aside>
+      <FilterPanel
+        titleId="desktop-catalog-filters"
+        countLabel={countLabel}
+        activeFilterCount={activeFilterCount}
+        clearFilters={clearFilters}
+        filterOptions={filterOptions}
+        filters={filters}
+        hasCollectionFilters={hasCollectionFilters}
+        hasPriceRange={hasPriceRange}
+        idScope="desktop"
+        priceBounds={priceBounds}
+        priceMaxValue={priceMaxValue}
+        priceMinValue={priceMinValue}
+        setSortBy={setSortBy}
+        sortBy={sortBy}
+        toggleArrayFilter={toggleArrayFilter}
+        updateFilter={updateFilter}
+        updatePrice={updatePrice}
+      />
 
       <div className="mobile-catalog-toolbar">
+        <button
+          type="button"
+          className={`mobile-filter-trigger ${activeFilterCount > 0 ? 'active' : ''}`}
+          onClick={() => setIsMobileFilterOpen(true)}
+        >
+          <span>Filtros</span>
+          {activeFilterCount > 0 && <small>{activeFilterCount}</small>}
+        </button>
         <span>{countLabel}</span>
         <SortSelect sortBy={sortBy} setSortBy={setSortBy} />
       </div>
+
+      {isMobileFilterOpen && (
+        <div
+          className="mobile-filter-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="mobile-catalog-filters"
+        >
+          <button
+            type="button"
+            className="mobile-filter-backdrop"
+            onClick={() => setIsMobileFilterOpen(false)}
+            aria-label="Cerrar filtros"
+          />
+          <div className="mobile-filter-sheet">
+            <FilterPanel
+              titleId="mobile-catalog-filters"
+              countLabel={countLabel}
+              activeFilterCount={activeFilterCount}
+              clearFilters={clearFilters}
+              filterOptions={filterOptions}
+              filters={filters}
+              hasCollectionFilters={hasCollectionFilters}
+              hasPriceRange={hasPriceRange}
+              idScope="mobile"
+              onApply={() => setIsMobileFilterOpen(false)}
+              onClose={() => setIsMobileFilterOpen(false)}
+              priceBounds={priceBounds}
+              priceMaxValue={priceMaxValue}
+              priceMinValue={priceMinValue}
+              setSortBy={setSortBy}
+              sortBy={sortBy}
+              toggleArrayFilter={toggleArrayFilter}
+              updateFilter={updateFilter}
+              updatePrice={updatePrice}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 };
